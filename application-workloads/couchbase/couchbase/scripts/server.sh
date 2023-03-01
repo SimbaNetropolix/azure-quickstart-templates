@@ -13,9 +13,9 @@ echo adminPassword \'$adminPassword\'
 echo uniqueString \'$uniqueString\'
 echo location \'$location\'
 
-echo "Installing Couchbase Server..."
-wget http://packages.couchbase.com/releases/4.6.3/couchbase-server-enterprise_4.6.3-ubuntu14.04_amd64.deb
-dpkg -i couchbase-server-enterprise_4.6.3-ubuntu14.04_amd64.deb
+echo "Installing Couchbase Server CE..."
+wget https://packages.couchbase.com/releases/7.1.1/couchbase-server-community_7.1.1-ubuntu18.04_amd64.deb
+dpkg -i couchbase-server-community_7.1.1-ubuntu18.04_amd64.deb
 apt-get update
 apt-get -y install couchbase-server
 
