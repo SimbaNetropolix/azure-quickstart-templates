@@ -7,7 +7,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/couchbase/couchbase/"
+      "defaultValue": "https://raw.githubusercontent.com/SimbaNetropolix/azure-quickstart-templates/master/application-workloads/couchbase/couchbase/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -28,16 +28,10 @@
         "description": "Size of Disk in GB for each Couchbase Server"
       }
     },
-    "syncGatewayNodeCount": {
-      "type": "int",
-      "metadata": {
-        "description": "Number of Couchbase Sync Gateways"
-      }
-    },
     "vmSize": {
       "type": "string",
       "metadata": {
-        "description": "Size of VM for Coucbase Server and Sync Gateway"
+        "description": "Size of VM for Coucbase Server"
       }
     },
     "adminUsername": {
@@ -103,20 +97,6 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 101,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "SyncGateway",
-            "properties": {
-              "description": "Sync Gateway",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "4984-4985",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 102,
               "direction": "Inbound"
             }
           },
@@ -336,108 +316,12 @@
           }
         }
       }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "name": "syncgateway",
-      "location": "[parameters('location')]",
-      "apiVersion": "2017-03-30",
-      "dependsOn": [
-        "Microsoft.Network/virtualNetworks/vnet"
-      ],
-      "plan": {
-        "publisher": "couchbase",
-        "product": "couchbase-sync-gateway-enterprise",
-        "name": "[parameters('license')]"
-      },
-      "sku": {
-        "name": "[parameters('vmSize')]",
-        "tier": "Standard",
-        "capacity": "[parameters('syncGatewayNodeCount')]"
-      },
-      "properties": {
-        "overprovision": false,
-        "upgradePolicy": {
-          "mode": "Manual"
-        },
-        "virtualMachineProfile": {
-          "storageProfile": {
-            "osDisk": {
-              "createOption": "FromImage"
-            },
-            "imageReference": {
-              "publisher": "couchbase",
-              "offer": "couchbase-sync-gateway-enterprise",
-              "sku": "[parameters('license')]",
-              "version": "latest"
-            }
-          },
-          "osProfile": {
-            "computerNamePrefix": "syncgateway",
-            "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPassword')]"
-          },
-          "networkProfile": {
-            "networkInterfaceConfigurations": [
-              {
-                "name": "nic",
-                "properties": {
-                  "primary": true,
-                  "ipConfigurations": [
-                    {
-                      "name": "ipconfig",
-                      "properties": {
-                        "subnet": {
-                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', 'vnet'), '/subnets/subnet')]"
-                        },
-                        "publicipaddressconfiguration": {
-                          "name": "public",
-                          "properties": {
-                            "idleTimeoutInMinutes": 30,
-                            "dnsSettings": {
-                              "domainNameLabel": "[concat('syncgateway-', variables('uniqueString'))]"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          "extensionProfile": {
-            "extensions": [
-              {
-                "name": "extension",
-                "properties": {
-                  "publisher": "Microsoft.Azure.Extensions",
-                  "type": "CustomScript",
-                  "typeHandlerVersion": "2.0",
-                  "autoUpgradeMinorVersion": true,
-                  "settings": {
-                    "fileUris": [
-                      "[uri(parameters('_artifactsLocation'), concat('scripts/syncGateway.sh', parameters('_artifactsLocationSasToken')))]",
-                      "[uri(parameters('_artifactsLocation'), concat('scripts/util.sh', parameters('_artifactsLocationSasToken')))]"
-                    ],
-                    "commandToExecute": "[concat('bash syncGateway.sh ', variables('uniqueString'), ' ', parameters('location'))]"
-                  }
-                }
-              }
-            ]
-          }
-        }
-      }
     }
   ],
   "outputs": {
     "serverAdminURL": {
       "type": "string",
       "value": "[concat(reference(concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/server/virtualMachines/0/networkInterfaces/nic/ipConfigurations/ipconfig/publicIPAddresses/public'), '2017-03-30').dnsSettings.fqdn, ':8091')]"
-    },
-    "syncGatewayAdminURL": {
-      "type": "string",
-      "value": "[concat(reference(concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/syncgateway/virtualMachines/0/networkInterfaces/nic/ipConfigurations/ipconfig/publicIPAddresses/public'), '2017-03-30').dnsSettings.fqdn, ':4985/_admin/')]"
     }
   }
 }
